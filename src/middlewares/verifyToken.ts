@@ -4,7 +4,7 @@ import {DecodedUser} from '../interfaces'
 
 const jwtSecret = process.env.JWT_SECRET
 
-const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
+const verifyToken = () => async (req: Request, res: Response, next: NextFunction) => {
   try {
     const bearerHeader = req.headers['authorization']
     if (!bearerHeader) {

@@ -73,7 +73,7 @@ class AuthController {
   }
 
   async generateJWT({id, username}: User) {
-    return jwt.sign({id, username}, jwtSecret as string, {expiresIn: '1800s'})
+    return jwt.sign({id, username}, jwtSecret as string, {expiresIn: '86400s'}) // token expires in 24h
   }
 
   async comparePasswords(password: string, hashedPassword: string) {
