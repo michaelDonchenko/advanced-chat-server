@@ -1,28 +1,39 @@
 import http from 'http'
 import express from 'express'
-import logger from 'morgan'
 import cors from 'cors'
+import {Server} from 'socket.io'
 import dotenv from 'dotenv'
+import WebSocket from './controllers/socket'
+import {Message, User} from './interfaces'
+import auth from './routes/auth'
 dotenv.config()
 
 const app = express()
 const port = process.env.PORT || '4000'
-
-app.use(logger('dev'))
-app.use(express.json())
-app.use(express.urlencoded({extended: false}))
-
-/** catch 404 and forward to error handler */
-app.use('*', (req, res) => {
-  return res.status(404).json({
-    success: false,
-    message: "API endpoint doesn't exist",
-  })
+const server = http.createServer(app)
+const io = new Server(server, {
+  cors: {
+    origin: 'http://127.0.0.1:3000',
+    credentials: true,
+  },
 })
 
-/** Create HTTP server. */
-const server = http.createServer(app)
-server.listen(port)
-server.on('listening', () => {
-  console.log(`Listening on port:: http://localhost:${port}/`)
+io.on('connection', (socket) => {
+  const webSocket = new WebSocket(socket)
+  // connection managing
+  webSocket.connection()
+  socket.on('login', (user: User) => webSocket.login(user))
+  socket.on('logout', (user: User) => webSocket.logout(user))
+  socket.on('disconnect', (reason) => webSocket.disconnect(reason))
+
+  socket.on('message', (message: Message) => webSocket.message(message))
+})
+
+app.use(cors())
+app.use(express.json())
+app.use(express.urlencoded({extended: false}))
+app.use('/auth', auth)
+
+server.listen(port, () => {
+  console.log(`listening on port ${port}`)
 })
