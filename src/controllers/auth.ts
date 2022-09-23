@@ -11,22 +11,27 @@ class AuthController {
   constructor(private prisma: PrismaClient) {}
 
   async login(req: Request, res: Response) {
-    const {email, password} = req.body
+    try {
+      const {email, password} = req.body
 
-    const foundUser = await this.findUser(email)
+      const foundUser = await this.findUser(email)
 
-    if (!foundUser) {
-      return res.status(400).json({message: 'Invalid credentials'})
+      if (!foundUser) {
+        return res.status(400).json({message: 'Invalid credentials'})
+      }
+
+      const matchPasswords = await this.comparePasswords(password, foundUser.password)
+
+      if (!matchPasswords) {
+        return res.status(400).json({message: 'Invalid credentials'})
+      }
+
+      const token = await this.generateJWT(foundUser)
+      return res.status(200).json({user: foundUser, token})
+    } catch (error) {
+      console.log(error)
+      return res.status(500).json({message: 'Something went wrong'})
     }
-
-    const matchPasswords = await this.comparePasswords(password, foundUser.password)
-
-    if (!matchPasswords) {
-      return res.status(400).json({message: 'Invalid credentials'})
-    }
-
-    const token = await this.generateJWT(foundUser)
-    return res.status(200).json({user: foundUser, token})
   }
 
   async register(req: Request, res: Response) {
@@ -45,12 +50,17 @@ class AuthController {
       return res.status(201).json({message: 'User created successfully', user: newUser, token})
     } catch (error) {
       console.log(error)
-      return res.status(500).json({message: 'An error accrued'})
+      return res.status(500).json({message: 'Something went wrong'})
     }
   }
 
   async logout(req: Request, res: Response) {
-    return res.status(200).json({message: 'Logged out'})
+    try {
+      return res.status(200).json({message: 'Logged out'})
+    } catch (error) {
+      console.log(error)
+      return res.status(500).json({message: 'Something went wrong'})
+    }
   }
 
   async hashPassword(password: string) {

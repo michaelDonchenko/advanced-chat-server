@@ -16,8 +16,22 @@ model User {
   email     String   @unique()
   password  String
   createdAt DateTime @default(now())
+  chats     Chat[]
 }
 
 model Chat {
-  id Int @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
+  creatorId    Int
+  creator      User      @relation(fields: [creatorId], references: [id])
+  participants Int[]
+  Messages     Message[]
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  from      Int
+  text      String
+  createdAt DateTime @default(now())
+  chatId    Int
+  chat      Chat     @relation(fields: [chatId], references: [id])
 }

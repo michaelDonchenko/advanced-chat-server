@@ -5,8 +5,8 @@ import AuthController from '../controllers/auth'
 import validate from '../middlewares/validate'
 import {loginSchema, registerSchema} from '../validations/auth'
 
-const prisma = new PrismaClient()
 const router = express.Router()
+const prisma = new PrismaClient()
 const authController = new AuthController(prisma)
 
 router.post('/login', validate(loginSchema), (req, res) => authController.login(req, res))
