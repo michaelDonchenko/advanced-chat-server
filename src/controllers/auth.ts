@@ -12,9 +12,9 @@ class AuthController {
 
   async login(req: Request, res: Response) {
     try {
-      const {email, password} = req.body
+      const {username, password} = req.body
 
-      const foundUser = await this.findUser(email)
+      const foundUser = await this.prisma.user.findFirst({where: {username}})
 
       if (!foundUser) {
         return res.status(400).json({message: 'Invalid credentials'})
@@ -27,7 +27,7 @@ class AuthController {
       }
 
       const token = await this.generateJWT(foundUser)
-      return res.status(200).json({user: foundUser, token})
+      return res.status(200).json({user: foundUser, jwt: token})
     } catch (error) {
       console.log(error)
       return res.status(500).json({message: 'Something went wrong'})
@@ -37,7 +37,7 @@ class AuthController {
   async register(req: Request, res: Response) {
     try {
       const {email, username, password} = req.body
-      const userExists = await this.findUser(email)
+      const userExists = await await this.prisma.user.findUnique({where: {email}})
 
       if (userExists) {
         return res.status(400).json({message: 'User already exists'})
@@ -47,7 +47,7 @@ class AuthController {
       const newUser = await this.prisma.user.create({data: {email, password: hashedPassword, username}})
       const token = await this.generateJWT(newUser)
 
-      return res.status(201).json({message: 'User created successfully', user: newUser, token})
+      return res.status(201).json({user: newUser, jwt: token})
     } catch (error) {
       console.log(error)
       return res.status(500).json({message: 'Something went wrong'})
@@ -66,10 +66,6 @@ class AuthController {
   async hashPassword(password: string) {
     const saltRounds = 12
     return await bcrypt.hash(password, saltRounds)
-  }
-
-  async findUser(email: string) {
-    return await this.prisma.user.findUnique({where: {email}})
   }
 
   async generateJWT({id, username}: User) {
