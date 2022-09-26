@@ -21,10 +21,8 @@ model User {
 
 model Chat {
   id           Int       @id @default(autoincrement())
-  creatorId    Int
-  creator      User      @relation(fields: [creatorId], references: [id])
-  participants Int[]
-  Messages     Message[]
+  participants User[]
+  messages     Message[]
 }
 
 model Message {

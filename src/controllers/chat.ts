@@ -1,4 +1,4 @@
-import {PrismaClient} from '@prisma/client'
+import {Prisma, PrismaClient} from '@prisma/client'
 import {Request, Response} from 'express'
 import {DecodedUser} from '../interfaces'
 
@@ -14,7 +14,9 @@ class ChatController {
       const chatExists = await this.prisma.chat.findFirst({
         where: {
           participants: {
-            hasEvery: [+userId, +myId],
+            every: {
+              AND: [{id: +myId}, {id: +userId}],
+            },
           },
         },
       })
@@ -23,11 +25,14 @@ class ChatController {
         return res.status(200).json({message: 'Chat already exists'})
       }
 
-      const chat = await this.prisma.chat.create({
-        data: {
-          creatorId: +myId,
-          participants: [+userId, +myId],
+      const newChat: Prisma.ChatCreateInput = {
+        participants: {
+          connect: [{id: +myId}, {id: +userId}],
         },
+      }
+
+      const chat = await this.prisma.chat.create({
+        data: newChat,
       })
 
       return res.status(201).json({chat})
@@ -43,19 +48,12 @@ class ChatController {
 
       const myChats = await this.prisma.chat.findMany({
         where: {
-          OR: [
-            {
-              creatorId: id,
-            },
-            {
-              participants: {
-                has: id,
-              },
-            },
-          ],
+          participants: {
+            some: {id},
+          },
         },
         include: {
-          Messages: {
+          messages: {
             select: {
               text: true,
               createdAt: true,
@@ -77,7 +75,7 @@ class ChatController {
       const foundChat = await this.prisma.chat.findUnique({
         where: {id: +chatId},
         include: {
-          Messages: true,
+          messages: true,
         },
       })
 
