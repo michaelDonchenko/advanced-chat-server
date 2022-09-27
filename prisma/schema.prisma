@@ -11,18 +11,22 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  username  String
-  email     String   @unique()
+  id        Int       @id @default(autoincrement())
+  username  String    @unique()
+  photo     String
   password  String
-  createdAt DateTime @default(now())
-  chats     Chat[]
+  createdAt DateTime  @default(now())
+  contacts  Contact[]
 }
 
-model Chat {
-  id           Int       @id @default(autoincrement())
-  participants User[]
-  messages     Message[]
+model Contact {
+  id       Int       @id @default(autoincrement())
+  username String
+  photo    String
+  messages Message[]
+
+  User   User? @relation(fields: [userId], references: [id])
+  userId Int?
 }
 
 model Message {
@@ -30,6 +34,6 @@ model Message {
   from      Int
   text      String
   createdAt DateTime @default(now())
-  chatId    Int
-  chat      Chat     @relation(fields: [chatId], references: [id])
+  Contact   Contact? @relation(fields: [contactId], references: [id])
+  contactId Int?
 }

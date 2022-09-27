@@ -3,8 +3,6 @@ import bcrypt from 'bcrypt'
 import * as jwt from 'jsonwebtoken'
 import {PrismaClient} from '@prisma/client'
 
-import {User} from '../interfaces'
-
 const jwtSecret = process.env.JWT_SECRET
 
 class AuthController {
@@ -14,7 +12,9 @@ class AuthController {
     try {
       const {username, password} = req.body
 
-      const foundUser = await this.prisma.user.findFirst({where: {username}})
+      const foundUser = await this.prisma.user.findFirst({
+        where: {username},
+      })
 
       if (!foundUser) {
         return res.status(400).json({message: 'Invalid credentials'})
@@ -27,6 +27,8 @@ class AuthController {
       }
 
       const token = await this.generateJWT(foundUser)
+      foundUser.password = ''
+
       return res.status(200).json({user: foundUser, jwt: token})
     } catch (error) {
       console.log(error)
@@ -36,15 +38,18 @@ class AuthController {
 
   async register(req: Request, res: Response) {
     try {
-      const {email, username, password} = req.body
-      const userExists = await await this.prisma.user.findUnique({where: {email}})
+      const {username, password} = req.body
+      const userExists = await await this.prisma.user.findUnique({where: {username}})
 
       if (userExists) {
         return res.status(400).json({message: 'User already exists'})
       }
 
       const hashedPassword = await this.hashPassword(password)
-      const newUser = await this.prisma.user.create({data: {email, password: hashedPassword, username}})
+      const newUser = await this.prisma.user.create({
+        data: {password: hashedPassword, username, photo: this.generateRandomAvatar()},
+        select: {id: true, username: true, photo: true, contacts: true},
+      })
       const token = await this.generateJWT(newUser)
 
       return res.status(201).json({user: newUser, jwt: token})
@@ -68,12 +73,22 @@ class AuthController {
     return await bcrypt.hash(password, saltRounds)
   }
 
-  async generateJWT({id, username}: User) {
+  async generateJWT({id, username}: {id: number; username: string}) {
     return jwt.sign({id, username}, jwtSecret as string, {expiresIn: '86400s'}) // token expires in 24h
   }
 
   async comparePasswords(password: string, hashedPassword: string) {
     return await bcrypt.compare(password, hashedPassword)
+  }
+
+  generateRandomAvatar() {
+    const generateGender = Math.round(Math.random())
+
+    const generateImageNumber = Math.ceil(Math.random() * 98)
+
+    return `https://randomuser.me/api/portraits/med/${
+      generateGender === 0 ? 'men' : 'women'
+    }/${generateImageNumber.toString()}.jpg`
   }
 }
 

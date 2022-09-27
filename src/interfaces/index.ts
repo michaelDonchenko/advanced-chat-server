@@ -1,6 +1,7 @@
 export interface DecodedUser {
   id: number
   username: string
+  photo: string
 }
 
 declare global {
@@ -13,7 +14,7 @@ declare global {
 
 export interface User {
   id: number
-  email: string
+  photo: string
   username: string
   password: string
   createdAt: Date

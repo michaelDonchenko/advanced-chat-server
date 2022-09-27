@@ -6,8 +6,8 @@ import dotenv from 'dotenv'
 import WebSocket from './controllers/socket'
 import {Message, User} from './interfaces'
 import auth from './routes/auth'
-import users from './routes/users'
-import chat from './routes/chat'
+import user from './routes/user'
+import contact from './routes/contact'
 dotenv.config()
 
 const app = express()
@@ -34,9 +34,7 @@ io.on('connection', (socket) => {
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({extended: false}))
-app.use('/auth', auth)
-app.use('/users', users)
-app.use('/chat', chat)
+app.use('/', [auth, user, contact])
 
 server.listen(port, () => {
   console.log(`listening on port ${port}`)

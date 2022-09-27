@@ -1,13 +1,16 @@
 import {PrismaClient} from '@prisma/client'
 import {Request, Response} from 'express'
 
-class UsersController {
+class UserController {
   constructor(private prisma: PrismaClient) {}
 
-  async findOne(req: Request, res: Response) {
+  async getUser(req: Request, res: Response) {
     try {
       const {id} = req.params
-      const foundUser = await this.prisma.user.findFirst({where: {id: +id}})
+      const foundUser = await this.prisma.user.findUnique({
+        where: {id: +id},
+        select: {id: true, username: true, photo: true, contacts: true},
+      })
       if (!foundUser) {
         return res.status(404).json({message: 'User not found'})
       }
@@ -19,9 +22,9 @@ class UsersController {
     }
   }
 
-  async findAll(req: Request, res: Response) {
+  async getAll(req: Request, res: Response) {
     try {
-      const users = await this.prisma.user.findMany()
+      const users = await this.prisma.user.findMany({select: {id: true, username: true, photo: true}})
       return res.status(200).json({users})
     } catch (error) {
       console.log(error)
@@ -40,4 +43,4 @@ class UsersController {
   }
 }
 
-export default UsersController
+export default UserController

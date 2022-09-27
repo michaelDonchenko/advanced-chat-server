@@ -9,8 +9,8 @@ const router = express.Router()
 const prisma = new PrismaClient()
 const authController = new AuthController(prisma)
 
-router.post('/login', validate(loginSchema), (req, res) => authController.login(req, res))
-router.post('/register', validate(registerSchema), (req, res) => authController.register(req, res))
-router.get('/logout', (req, res) => authController.logout(req, res))
+router.post('/auth/login', validate(loginSchema), (req, res) => authController.login(req, res))
+router.post('/auth/register', validate(registerSchema), (req, res) => authController.register(req, res))
+router.get('/auth/logout', (req, res) => authController.logout(req, res))
 
 export default router
