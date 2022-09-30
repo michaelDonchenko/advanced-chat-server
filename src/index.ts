@@ -8,6 +8,7 @@ import {Message, User} from './interfaces'
 import auth from './routes/auth'
 import user from './routes/user'
 import contact from './routes/contact'
+import conversation from './routes/conversation'
 dotenv.config()
 
 const app = express()
@@ -34,7 +35,7 @@ io.on('connection', (socket) => {
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({extended: false}))
-app.use('/', [auth, user, contact])
+app.use('/', [auth, user, contact, conversation])
 
 server.listen(port, () => {
   console.log(`listening on port ${port}`)
