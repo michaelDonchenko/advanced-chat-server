@@ -7,6 +7,7 @@ const router = express.Router()
 const prisma = new PrismaClient()
 const contactController = new ContactController(prisma)
 
+router.get('/contact/get', verifyToken(), (req, res) => contactController.getContacts(req, res))
 router.post('/contact/create', verifyToken(), (req, res) => contactController.createOrFind(req, res))
 router.delete('/contact/delete', verifyToken(), (req, res) => contactController.createOrFind(req, res))
 

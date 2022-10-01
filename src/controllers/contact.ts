@@ -4,6 +4,18 @@ import {Request, Response} from 'express'
 class ContactController {
   constructor(private prisma: PrismaClient) {}
 
+  async getContacts(req: Request, res: Response) {
+    try {
+      const myUserId = req.user?.id as number
+      const contacts = await this.prisma.contact.findMany({where: {userId: myUserId}})
+
+      return res.status(200).json({contacts})
+    } catch (error) {
+      console.log(error)
+      return res.status(500).json({message: 'Something went wrong'})
+    }
+  }
+
   async createOrFind(req: Request, res: Response) {
     try {
       const myUserId = req.user?.id as number
@@ -33,14 +45,7 @@ class ContactController {
         return res.status(201).json({message: 'Contact added', contact: newContact})
       }
 
-      const newConversation = await this.prisma.conversation.create({data: {}})
-
-      await this.prisma.conversation.update({
-        where: {id: newConversation.id},
-        data: {
-          participants: [myUserId, relatedUser.id],
-        },
-      })
+      const newConversation = await this.prisma.conversation.create({data: {participants: [myUserId, relatedUser.id]}})
 
       const newContact = await this.prisma.contact.create({
         data: {userId: myUserId, username, photo: relatedUser.photo, conversationId: newConversation.id},

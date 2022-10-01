@@ -48,7 +48,6 @@ class AuthController {
       const hashedPassword = await this.hashPassword(password)
       const newUser = await this.prisma.user.create({
         data: {password: hashedPassword, username, photo: this.generateRandomAvatar()},
-        select: {id: true, username: true, photo: true, contacts: true},
       })
       const token = await this.generateJWT(newUser)
 
