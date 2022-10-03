@@ -4,11 +4,11 @@ import cors from 'cors'
 import {Server} from 'socket.io'
 import dotenv from 'dotenv'
 import WebSocket from './controllers/socket'
-import {Message, User} from './interfaces'
 import auth from './routes/auth'
 import user from './routes/user'
 import contact from './routes/contact'
 import conversation from './routes/conversation'
+import {PrismaClient} from '@prisma/client'
 dotenv.config()
 
 const app = express()
@@ -20,16 +20,17 @@ const io = new Server(server, {
     credentials: true,
   },
 })
+const prisma = new PrismaClient()
 
 io.on('connection', (socket) => {
-  const webSocket = new WebSocket(socket)
-  // connection managing
-  webSocket.connection()
-  socket.on('login', (user: User) => webSocket.login(user))
-  socket.on('logout', (user: User) => webSocket.logout(user))
-  socket.on('disconnect', (reason) => webSocket.disconnect(reason))
+  const webSocket = new WebSocket(socket, prisma)
+  const userId = socket.handshake.query.userId
+  webSocket.connection(userId)
 
-  socket.on('message', (message: Message) => webSocket.message(message))
+  socket.on('login', (userId: string) => webSocket.login(userId))
+  socket.on('logout', (userId: string) => webSocket.logout(userId))
+  socket.on('message', ({message, conversation, myUserId}) => webSocket.message(message, conversation, myUserId))
+  socket.on('disconnect', (reason) => webSocket.disconnect(reason, userId))
 })
 
 app.use(cors())

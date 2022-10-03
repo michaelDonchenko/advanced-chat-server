@@ -24,6 +24,6 @@ export interface Message {
   id: number
   from: number
   text: string
-  createdAt: string
-  chatId: number
+  createdAt: Date
+  conversationId: number
 }

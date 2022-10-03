@@ -27,10 +27,14 @@ class ContactController {
         return res.status(404).json({message: 'Could not find related user'})
       }
 
+      if (relatedUser.id === myUserId) {
+        return res.status(400).json({message: 'Cannot add yourself'})
+      }
+
       const existingContact = await this.prisma.contact.findFirst({where: {userId: myUserId, username}})
 
       if (existingContact) {
-        return res.status(200).json({contact: existingContact})
+        return res.status(400).json({message: 'Contact already exists'})
       }
 
       const existingConversation = await this.prisma.conversation.findFirst({
