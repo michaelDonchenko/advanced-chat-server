@@ -11,7 +11,6 @@ class WebSocket {
     if (userId && userId !== 'undefined') {
       onlineUsers.set(+userId, {socketRef: this.socket.id})
     }
-    console.log(onlineUsers)
   }
 
   disconnect(reason: string, userId: string | string[] | undefined) {
@@ -19,31 +18,29 @@ class WebSocket {
       onlineUsers.delete(+userId)
       this.socket.disconnect()
     }
-
-    console.log(onlineUsers)
   }
 
   login(userId: string) {
     onlineUsers.set(+userId, {socketRef: this.socket.id})
-    console.log(onlineUsers)
   }
 
   logout(userId: string) {
     onlineUsers.delete(+userId)
-    console.log(onlineUsers)
   }
 
   async message(message: Message, conversation: Conversation, myUserId: number) {
     try {
+      const myUser = await this.prisma.user.findUnique({where: {id: myUserId}})
       const newMessage = await this.prisma.message.create({data: {...message}})
       const filteredMyUserId = conversation.participants.filter((id) => id !== myUserId)
       const otherUserId = filteredMyUserId[0]
-      const isContactExists = await this.prisma.contact.findFirst({where: {userId: otherUserId}})
+      const isContactExists = await this.prisma.contact.findFirst({
+        where: {userId: otherUserId, username: myUser?.username},
+      })
       const relatedUser = await this.prisma.user.findUnique({where: {id: otherUserId}})
       const isRelatedUserOnline = onlineUsers.has(relatedUser?.id)
 
       if (!isContactExists) {
-        const myUser = await this.prisma.user.findUnique({where: {id: myUserId}})
         if (!relatedUser || !myUser) {
           return
         }
@@ -58,7 +55,7 @@ class WebSocket {
         })
 
         if (isRelatedUserOnline) {
-          this.socket.to(onlineUsers.get(otherUserId)?.socketRef).emit('newContact', {contact: newContact})
+          this.socket.to(onlineUsers.get(otherUserId)?.socketRef).emit('newContact', newContact)
         }
       }
 
