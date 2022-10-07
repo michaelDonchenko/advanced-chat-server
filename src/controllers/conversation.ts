@@ -11,7 +11,7 @@ class ConversationController {
 
       const foundConversation = await this.prisma.conversation.findUnique({
         where: {id: +conversationId},
-        include: {messages: true},
+        include: {messages: {orderBy: {createdAt: 'asc'}}},
       })
 
       if (!foundConversation) {

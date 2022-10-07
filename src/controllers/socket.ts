@@ -51,6 +51,11 @@ class WebSocket {
             photo: myUser.photo,
             conversationId: conversation.id,
             userId: relatedUser.id,
+            lastMessage: {
+              text: message.text,
+              updatedAt: String(message.createdAt),
+            },
+            unreadMessages: 1,
           },
         })
 
@@ -59,12 +64,49 @@ class WebSocket {
         }
       }
 
-      if (isRelatedUserOnline) {
-        this.socket.to(onlineUsers.get(otherUserId)?.socketRef).emit('newMessage', newMessage)
+      if (isContactExists) {
+        const prevUnreadMessages = isContactExists.unreadMessages
+        const contactId = isContactExists.id
+
+        const updatedContact = await this.prisma.contact.update({
+          where: {id: contactId},
+          data: {
+            lastMessage: {
+              text: message.text,
+              updatedAt: String(message.createdAt),
+            },
+            unreadMessages: prevUnreadMessages + 1,
+          },
+        })
+
+        if (isRelatedUserOnline) {
+          this.socket.to(onlineUsers.get(otherUserId)?.socketRef).emit('newMessage', newMessage)
+          this.socket.to(onlineUsers.get(otherUserId)?.socketRef).emit('updateContactValues', updatedContact)
+        }
       }
 
       // send message to myself
       this.socket.emit('selfMessage', newMessage)
+      // update my contact details
+      const myContact = await this.prisma.contact.findFirst({
+        where: {userId: myUserId, username: relatedUser?.username},
+      })
+
+      if (!myContact) {
+        return
+      }
+
+      const myUpdatedContact = await this.prisma.contact.update({
+        where: {id: myContact.id},
+        data: {
+          lastMessage: {
+            text: message.text,
+            updatedAt: String(message.createdAt),
+          },
+        },
+      })
+
+      this.socket.emit('updateMyContact', myUpdatedContact)
     } catch (error) {
       console.log(error)
     }
