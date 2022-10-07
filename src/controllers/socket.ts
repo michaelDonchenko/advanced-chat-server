@@ -1,4 +1,4 @@
-import {Conversation, PrismaClient} from '@prisma/client'
+import {Contact, Conversation, PrismaClient} from '@prisma/client'
 import {Socket} from 'socket.io'
 import {Message} from '../interfaces'
 
@@ -67,6 +67,12 @@ class WebSocket {
       if (isContactExists) {
         const prevUnreadMessages = isContactExists.unreadMessages
         const contactId = isContactExists.id
+        let updatedUnreadMessagesCount = prevUnreadMessages
+        const onlineUser = onlineUsers.get(otherUserId)
+
+        if (onlineUser?.conversationId !== message.conversationId) {
+          updatedUnreadMessagesCount = prevUnreadMessages + 1
+        }
 
         const updatedContact = await this.prisma.contact.update({
           where: {id: contactId},
@@ -75,7 +81,7 @@ class WebSocket {
               text: message.text,
               updatedAt: String(message.createdAt),
             },
-            unreadMessages: prevUnreadMessages + 1,
+            unreadMessages: updatedUnreadMessagesCount,
           },
         })
 
@@ -107,6 +113,28 @@ class WebSocket {
       })
 
       this.socket.emit('updateMyContact', myUpdatedContact)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  async conversationChange(conversationId: number, myUserId: number) {
+    try {
+      onlineUsers.set(myUserId, {socketRef: this.socket.id, conversationId: conversationId || null})
+
+      const contact = await this.prisma.contact.findFirst({where: {userId: myUserId, conversationId}})
+      if (!contact) {
+        return
+      }
+
+      const updatedContact = await this.prisma.contact.update({
+        where: {id: contact.id},
+        data: {
+          unreadMessages: 0,
+        },
+      })
+
+      this.socket.emit('updateMyContact', updatedContact)
     } catch (error) {
       console.log(error)
     }

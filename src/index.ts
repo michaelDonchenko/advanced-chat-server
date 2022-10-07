@@ -31,6 +31,9 @@ io.on('connection', (socket) => {
   socket.on('logout', (userId: string) => webSocket.logout(userId))
   socket.on('message', ({message, conversation, myUserId}) => webSocket.message(message, conversation, myUserId))
   socket.on('disconnect', (reason) => webSocket.disconnect(reason, userId))
+  socket.on('conversationChange', ({conversationId, myUserId}) =>
+    webSocket.conversationChange(conversationId, myUserId)
+  )
 })
 
 app.use(cors())
