@@ -7,7 +7,10 @@ class ContactController {
   async getContacts(req: Request, res: Response) {
     try {
       const myUserId = req.user?.id as number
-      const contacts = await this.prisma.contact.findMany({where: {userId: myUserId}})
+      const contacts = await this.prisma.contact.findMany({
+        where: {userId: myUserId},
+        orderBy: {createdAt: 'asc'},
+      })
 
       return res.status(200).json({contacts})
     } catch (error) {
